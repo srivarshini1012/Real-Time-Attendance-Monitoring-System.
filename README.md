@@ -3,8 +3,11 @@
 The Face Recognition Attendance System is a web-based application that uses Artificial Intelligence and Computer Vision to automate attendance marking.
 It eliminates manual attendance processes by identifying individuals in real-time through a webcam or uploaded images, and storing their attendance details in a CSV file for record-keeping.
 
+
 This system is built with Flask for the backend, HTML/CSS/JavaScript for the frontend, and OpenCV with KNN classifier for face detection and recognition.
 It includes a simple Admin Panel to view, search, and filter attendance records by date, and also provides a Download CSV feature.
+
+
 
 --How It Works
 1.Upload Faces
