@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Real-time Attendance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    #overlay { position:absolute; left:50%; transform:translateX(-50%); pointer-events:none; }
+    .video-wrap { position:relative; display:inline-block; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Real-time Attendance (Camera)</h2>
+
+    <div style="text-align:center;">
+      <div class="video-wrap">
+        <video id="video" autoplay playsinline width="720" style="border-radius:8px; border:2px solid rgba(255,255,255,0.12)"></video>
+        <canvas id="overlay" width="720" height="560"></canvas>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-top:10px;">
+      <button class="btn" id="startBtn">Start</button>
+      <button class="btn" id="stopBtn" disabled>Stop</button>
+      <a href="{{ url_for('index') }}" class="btn">Go Home</a>
+    </div>
+
+    <div style="text-align:center; margin-top:12px; color:#fff;">
+      <strong>Recognized (frame):</strong> <span id="recognized">-</span><br>
+      <strong>Written to CSV (today):</strong> <span id="written">-</span>
+    </div>
+  </div>
+
+<script>
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay');
+const ctx = overlay.getContext('2d');
+const startBtn = document.getElementById('startBtn');
+const stopBtn = document.getElementById('stopBtn');
+const recognizedSpan = document.getElementById('recognized');
+const writtenSpan = document.getElementById('written');
+
+let stream, intervalId;
+let writtenNames = [];
+
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 720, height: 560 }, audio: false });
+    video.srcObject = stream;
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+    // send initial frame then every 1500ms
+    sendAndDraw();
+    intervalId = setInterval(sendAndDraw, 1500);
+  } catch (e) {
+    alert('Camera access denied or not available.');
+  }
+}
+
+function stopCamera() {
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  clearInterval(intervalId);
+  if (stream) {
+    stream.getTracks().forEach(t=>t.stop());
+    video.srcObject = null;
+  }
+  // clear overlay
+  ctx.clearRect(0,0,overlay.width, overlay.height);
+}
+
+function captureBlob() {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 720;
+  canvas.height = video.videoHeight || 560;
+  const c = canvas.getContext('2d');
+  c.drawImage(video, 0, 0, canvas.width, canvas.height);
+  return new Promise(res => canvas.toBlob(b => res(b), 'image/jpeg', 0.8));
+}
+
+async function sendAndDraw() {
+  if (!video || video.readyState < 2) return;
+  const blob = await captureBlob();
+  const fd = new FormData();
+  fd.append('frame', new File([blob], 'frame.jpg', { type: 'image/jpeg' }));
+  try {
+    const res = await fetch('/recognize_frame', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (!data.success) {
+      recognizedSpan.innerText = data.message || 'error';
+      return;
+    }
+    // draw overlay boxes
+    ctx.clearRect(0,0,overlay.width, overlay.height);
+    overlay.width = video.videoWidth || 720;
+    overlay.height = video.videoHeight || 560;
+    const rec = data.recognized || [];
+    recognizedSpan.innerText = rec.length ? rec.map(r=>r.name).join(', ') : '-';
+    // draw bboxes and names
+    rec.forEach(r => {
+      const [x,y,w,h] = r.bbox;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(26,188,156,0.9)';
+      ctx.strokeRect(x,y,w,h);
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      ctx.fillRect(x, y - 24, ctx.measureText(r.name).width + 12, 24);
+      ctx.fillStyle = '#fff';
+      ctx.font = '16px Arial';
+      ctx.fillText(r.name, x + 6, y - 6);
+    });
+
+    // update written
+    if (data.written && data.written.length) {
+      data.written.forEach(n => { if (!writtenNames.includes(n)) writtenNames.push(n); });
+      writtenSpan.innerText = writtenNames.join(', ');
+    }
+  } catch (err) {
+    recognizedSpan.innerText = 'Error';
+  }
+}
+
+startBtn.addEventListener('click', startCamera);
+stopBtn.addEventListener('click', stopCamera);
+</script>
+</body>
+</html>

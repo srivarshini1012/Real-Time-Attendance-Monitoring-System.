@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Face Recognition Attendance</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+  <div class="container">
+    <h1>Face Recognition Attendance</h1>
+    <div style="text-align:center;">
+      <a href="{{ url_for('upload_page') }}" class="btn">📤 Register Face</a>
+      <a href="{{ url_for('train') }}" class="btn">🧠 Train Model</a>
+      <a href="{{ url_for('attendance_page') }}" class="btn">📸 Start Attendance</a>
+      <a href="{{ url_for('admin') }}" class="btn">🧾 View Records</a>
+      <a href="{{ url_for('download_csv') }}" class="btn">⬇️ Download CSV</a>
+    </div>
+  </div>
+</body>
+</html>

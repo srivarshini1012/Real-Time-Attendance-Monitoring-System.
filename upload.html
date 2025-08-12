@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Register Face</title>
+ <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+
+  <style>
+    .progress-bar { width: 80%; height: 16px; background: rgba(255,255,255,0.12); border-radius:8px; margin: 8px auto; }
+    .progress-inner { height:100%; width:0%; background:#1abc9c; border-radius:8px; transition: width 0.25s; }
+    .countdown { font-size: 36px; font-weight: bold; color:#fff; margin-top:8px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Register Face (Camera)</h2>
+
+    <div style="text-align:center; margin-bottom:10px;">
+      <input id="name" type="text" placeholder="Enter Name" style="width:60%; padding:8px; border-radius:6px;">
+    </div>
+
+    <div style="text-align:center;">
+      <video id="video" autoplay playsinline width="560" style="border-radius:8px; border:2px solid rgba(255,255,255,0.12)"></video>
+      <canvas id="overlay" width="560" height="420" style="position:absolute; left:50%; transform:translateX(-50%); pointer-events:none;"></canvas>
+    </div>
+
+    <div style="text-align:center; margin-top:12px;">
+      <button class="btn" id="startCam">Start Camera</button>
+      <button class="btn" id="capture" disabled>Capture 10 Frames</button>
+      <a href="{{ url_for('index') }}" class="btn">Go Home</a>
+    </div>
+
+    <div class="progress-bar" id="progressBar"><div class="progress-inner" id="progressInner"></div></div>
+    <div class="countdown" id="countdown" style="text-align:center;"> </div>
+    <p id="status" style="text-align:center; color:#fff;"></p>
+  </div>
+
+<script>
+const video = document.getElementById('video');
+const overlay = document.getElementById('overlay');
+const ctx = overlay.getContext('2d');
+const startCam = document.getElementById('startCam');
+const captureBtn = document.getElementById('capture');
+const status = document.getElementById('status');
+const countdownEl = document.getElementById('countdown');
+const progressInner = document.getElementById('progressInner');
+
+let stream;
+
+startCam.addEventListener('click', async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 }, audio: false });
+    video.srcObject = stream;
+    video.play();
+    captureBtn.disabled = false;
+    status.innerText = "Camera started. Position face in center.";
+    drawLoop();
+  } catch (e) {
+    status.innerText = "Camera error or permission denied.";
+  }
+});
+
+function drawLoop() {
+  // draw simple overlay box center to guide user
+  const w = video.videoWidth || 560;
+  const h = video.videoHeight || 420;
+  overlay.width = w;
+  overlay.height = h;
+  ctx.clearRect(0,0,w,h);
+  // center box
+  const bw = Math.floor(w*0.5);
+  const bh = Math.floor(h*0.6);
+  const bx = Math.floor((w-bw)/2);
+  const by = Math.floor((h-bh)/2);
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(26,188,156,0.9)';
+  ctx.strokeRect(bx,by,bw,bh);
+  requestAnimationFrame(drawLoop);
+}
+
+function snapshotBlob() {
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+  const c = canvas.getContext('2d');
+  c.drawImage(video, 0,0, canvas.width, canvas.height);
+  return new Promise(res => canvas.toBlob(b => res(b), 'image/jpeg', 0.95));
+}
+
+captureBtn.addEventListener('click', async () => {
+  const name = document.getElementById('name').value.trim();
+  if (!name) { alert('Enter a name'); return; }
+  captureBtn.disabled = true;
+  startCam.disabled = true;
+  status.innerText = 'Preparing to capture...';
+  // countdown 3..2..1
+  for (let i=3;i>=1;i--) {
+    countdownEl.innerText = i;
+    await new Promise(r => setTimeout(r, 700));
+  }
+  countdownEl.innerText = '';
+  status.innerText = 'Capturing 10 frames. Hold still.';
+  const frames = [];
+  const total = 10; // EXACTLY 10 frames
+  for (let i=0;i<total;i++) {
+    const blob = await snapshotBlob();
+    frames.push(new File([blob], `f${i}.jpg`, { type:'image/jpeg' }));
+    progressInner.style.width = `${Math.round(((i+1)/total)*100)}%`;
+    await new Promise(r => setTimeout(r, 350)); // small pause between frames
+  }
+
+  status.innerText = 'Uploading frames...';
+  const fd = new FormData();
+  fd.append('name', name);
+  frames.forEach(f => fd.append('frames', f));
+
+  try {
+    const res = await fetch('/upload_frames', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      status.innerText = `Saved ${data.saved} images for "${name}". Now click Train Model.`;
+    } else {
+      status.innerText = 'Upload failed: ' + (data.message || 'unknown');
+    }
+  } catch (err) {
+    status.innerText = 'Upload error.';
+  } finally {
+    captureBtn.disabled = false;
+    startCam.disabled = false;
+    progressInner.style.width = '0%';
+  }
+});
+</script>
+</body>
+</html>

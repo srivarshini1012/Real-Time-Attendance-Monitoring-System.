@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Attendance Records</title>
+
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background: linear-gradient(to right, #2980b9, #6dd5fa);
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .container {
+            max-width: 960px;
+            margin: 50px auto;
+            background-color: #1e2b38;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.3);
+            color: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #122230;
+            color: #fff;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border: 1px solid #2c3e50;
+        }
+        th {
+            background-color: #00b894;
+        }
+        .btn {
+            background-color: #00cec9;
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            color: white;
+            margin: 5px;
+            display: inline-block;
+        }
+        .btn:hover {
+            background-color: #00b894;
+        }
+        .filter-box {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        input[type="date"], input[type="text"] {
+            padding: 8px;
+            border-radius: 5px;
+            border: none;
+            font-size: 16px;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+    <h1>Attendance Records</h1>
+
+    <div class="filter-box">
+        <input type="text" id="nameSearch" placeholder="Search by name">
+        <input type="date" id="dateSearch">
+        <button class="btn" onclick="filterTable()">Filter</button>
+        <button class="btn" onclick="clearFilter()">Clear Filter</button>
+        <a href="{{ url_for('download_csv') }}" class="btn">⬇️ Download CSV</a>
+        <a href="{{ url_for('home') }}" class="btn">🏠 Go Home</a>
+    </div>
+
+    {% if records %}
+    <table id="attendanceTable">
+        <tr>
+            <th>Name</th>
+            <th>Date</th>
+            <th>Time</th>
+        </tr>
+        {% for row in records %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+        <p style="text-align:center;">No records found.</p>
+    {% endif %}
+</div>
+
+<script>
+function filterTable() {
+    let nameFilter = document.getElementById("nameSearch").value.toLowerCase();
+    let dateFilter = document.getElementById("dateSearch").value;
+    let rows = document.querySelectorAll("#attendanceTable tr");
+
+    for (let i = 1; i < rows.length; i++) {
+        let nameCell = rows[i].cells[0].textContent.toLowerCase();
+        let dateCell = rows[i].cells[1].textContent.trim();
+
+        let nameMatch = nameCell.includes(nameFilter) || nameFilter === "";
+        let dateMatch = dateCell === dateFilter || dateFilter === "";
+
+        rows[i].style.display = (nameMatch && dateMatch) ? "" : "none";
+    }
+}
+
+function clearFilter() {
+    document.getElementById("nameSearch").value = "";
+    document.getElementById("dateSearch").value = "";
+    filterTable();
+}
+</script>
+</body>
+</html>

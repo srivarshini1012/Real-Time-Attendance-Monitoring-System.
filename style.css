@@ -1,0 +1,113 @@
+/* ========== Global Styles ========== */
+body {
+    background: linear-gradient(to right, #2c3e50, #3498db);
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: #fff;
+}
+
+/* Container */
+.container {
+    max-width: 960px;
+    margin: 50px auto;
+    background-color: rgba(0, 0, 0, 0.75);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+}
+
+/* Headings */
+h1, h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #f1f1f1;
+}
+
+/* Buttons */
+.btn, button {
+    background: linear-gradient(45deg, #00cec9, #00b894);
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: white;
+    margin: 5px;
+    display: inline-block;
+    font-weight: bold;
+    transition: 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+.btn:hover, button:hover {
+    background: linear-gradient(45deg, #00b894, #00cec9);
+}
+
+/* Inputs */
+input[type="text"], input[type="file"], input[type="date"], select {
+    padding: 10px;
+    width: 90%;
+    margin: 10px auto;
+    display: block;
+    border-radius: 6px;
+    border: none;
+    font-size: 16px;
+    outline: none;
+}
+
+/* Messages */
+.success { color: #2ecc71; text-align: center; }
+.error { color: #e74c3c; text-align: center; }
+
+/* Table Styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 20px;
+}
+th, td {
+    padding: 12px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+th {
+    background-color: #00b894;
+    text-transform: uppercase;
+}
+tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+tr:hover {
+    background-color: rgba(0, 255, 200, 0.15);
+}
+
+/* Clock Style */
+.clock {
+    position: fixed;
+    top: 15px;
+    right: 30px;
+    font-size: 18px;
+    color: white;
+    font-weight: bold;
+    background-color: rgba(0,0,0,0.4);
+    padding: 6px 14px;
+    border-radius: 12px;
+    z-index: 1000;
+}
+
+/* Responsive */
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 20px;
+        margin: 20px;
+    }
+    table, th, td {
+        font-size: 14px;
+    }
+    input[type="text"], input[type="date"], input[type="file"], select {
+        width: 100%;
+    }
+}
